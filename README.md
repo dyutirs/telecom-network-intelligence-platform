@@ -6,6 +6,8 @@ Telecom Network Intelligence Platform is a Python-based LTE network optimization
 
 The platform performs KPI aggregation, health scoring, root cause analysis, PCI planning checks, congestion detection, overshooting analysis, sector imbalance detection, neighbor analysis, and site risk ranking.
 
+---
+
 ## Features
 
 ### Cell Intelligence
@@ -47,12 +49,78 @@ The platform performs KPI aggregation, health scoring, root cause analysis, PCI 
 * RCA-based cell visualization
 * Layer selection for all cells and unhealthy cells
 
+---
+
+## Project Architecture
+
+Raw Network Data
+
+↓
+
+Cell Intelligence Engine
+
+↓
+
+Health Scoring Engine
+
+↓
+
+Root Cause Analysis Engine
+
+↓
+
+Optimization Analytics
+
+├── PCI Analysis
+
+├── Congestion Analysis
+
+├── Overshooting Analysis
+
+├── Neighbor Analysis
+
+└── Sector Imbalance Analysis
+
+↓
+
+Site Intelligence Engine
+
+↓
+
+Action Recommendation Engine
+
+↓
+
+Reports and Interactive Maps
+
+---
+
+## Outputs
+
+The platform generates:
+
+* Cell Intelligence Report
+* Site Intelligence Report
+* RCA Report
+* Site Risk Ranking
+* PCI Analysis Report
+* Congestion Analysis Report
+* Overshooting Analysis Report
+* Neighbor Analysis Report
+* Action Recommendation Report
+* Interactive Network Map
+
+---
+
 ## Technologies
 
 * Python
 * Pandas
+* NumPy
 * Folium
 * OpenStreetMap
+
+---
 
 ## Future Improvements
 
@@ -60,3 +128,4 @@ The platform performs KPI aggregation, health scoring, root cause analysis, PCI 
 * Streamlit dashboard
 * Real-time KPI ingestion
 * Machine Learning based anomaly detection
+* Automated optimization workflows
