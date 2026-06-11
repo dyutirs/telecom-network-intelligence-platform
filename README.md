@@ -116,19 +116,19 @@ The platform generates:
 
 ### Network Visualization
 
-![Network Map](docs/images/network_map.png)
+![Network Map](docs/images/network_map.jpeg)
 
 ### RCA Analytics
 
-![RCA Distribution](docs/images/rca_distribution.png)
+![RCA Distribution](docs/images/rca_distribution.jpeg)
 
 ### Site Risk Ranking
 
-![Site Risk Ranking](docs/images/site_risk_ranking.png)
+![Site Risk Ranking](docs/images/site_risk_ranking.jpeg)
 
 ### Action Recommendation Engine
 
-![Action List](docs/images/action_list.png)
+![Action List](docs/images/action_list.jpeg)
 
 ---
 
