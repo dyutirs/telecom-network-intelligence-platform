@@ -112,6 +112,26 @@ The platform generates:
 
 ---
 
+## Sample Outputs
+
+### Network Visualization
+
+![Network Map](docs/images/network_map.png)
+
+### RCA Analytics
+
+![RCA Distribution](docs/images/rca_distribution.png)
+
+### Site Risk Ranking
+
+![Site Risk Ranking](docs/images/site_risk_ranking.png)
+
+### Action Recommendation Engine
+
+![Action List](docs/images/action_list.png)
+
+---
+
 ## Technologies
 
 * Python
