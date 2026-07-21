@@ -1,5 +1,10 @@
 import pandas as pd
 
+# A cell needs at least this many total penalty points before its
+# diagnosis confidence is allowed to reach 100% - a cell with only 1-2
+# points is real but marginal, and shouldn't read as "fully certain".
+SEVERITY_REFERENCE = 6
+
 
 class RCAEngine:
 
@@ -39,17 +44,15 @@ class RCAEngine:
         # ------------------
         # QUALITY
         # ------------------
+        # Uses SINR rather than RSRQ: RSRQ is partly derived from RSRP,
+        # so it re-punishes cells that are already caught by Coverage.
+        # SINR isolates interference/noise independent of distance,
+        # which is what "Quality" is meant to capture.
 
-        if row["median_rsrq"] < -18:
+        if row["median_sinr"] < 0:
             quality += 2
 
-        elif row["median_rsrq"] < -14:
-            quality += 1
-
-        if row["median_rsrq"] < -16:
-            quality += 2
-
-        elif row["median_rsrq"] < -12:
+        elif row["median_sinr"] < 5:
             quality += 1
 
         # ------------------
@@ -106,8 +109,15 @@ class RCAEngine:
         key=scores.get
     )
 
+        # Confidence blends two things: how much the winning category
+        # dominates the others (scores[issue]), and how severe the
+        # total picture actually is (severity_cap). Without the cap, a
+        # cell that trips just one lenient threshold shows the same
+        # 100% confidence as a cell that is severely broken.
+        severity_cap = min(total / SEVERITY_REFERENCE, 1.0)
+
         confidence = round(
-            scores[issue] * 100,
+            scores[issue] * severity_cap * 100,
             1
         )
 

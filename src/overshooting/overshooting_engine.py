@@ -14,12 +14,17 @@ class OvershootingEngine:
 
             issue = None
 
+            # -105 dBm is RCA's own "clearly weak" cutoff, so requiring
+            # only that here let borderline-weak cells pass as "decent
+            # signal". Using -95 (RCA's zero-penalty threshold) means a
+            # cell only counts as overshooting if RCA wouldn't have
+            # flagged its coverage as weak in the first place.
             if (
                 pd.notna(row["median_ta"])
                 and
                 row["median_ta"] > 25
                 and
-                row["median_rsrp"] > -105  
+                row["median_rsrp"] >= -95
                 and
                 row["median_sinr"] > 0
             ):
@@ -31,7 +36,7 @@ class OvershootingEngine:
                 and
                 row["median_ta"] > 20
                 and
-                row["median_rsrp"] > -100
+                row["median_rsrp"] >= -95
                 and
                 row["median_sinr"] > 3
             ):

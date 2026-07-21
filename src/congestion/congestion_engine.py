@@ -2,6 +2,14 @@ import pandas as pd
 
 
 class CongestionEngine:
+    """Flags cells with good signal but poor throughput as likely
+    congested (too many users, not a radio problem).
+
+    Caveat: this is inferred from the signal-vs-throughput mismatch,
+    not confirmed against a real traffic/PRB utilization counter - this
+    dataset doesn't have one. Treat "Congestion" as a strong candidate
+    to verify against real traffic KPIs, not a confirmed diagnosis.
+    """
 
     def analyze(
         self,

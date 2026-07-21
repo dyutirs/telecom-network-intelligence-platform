@@ -1,5 +1,6 @@
 import pandas as pd
-from math import radians, sin, cos, sqrt, atan2
+
+from src.utils.geo import haversine_km
 
 
 class PCIConflictAnalysis:
@@ -12,27 +13,7 @@ class PCIConflictAnalysis:
         lon2
     ):
 
-        R = 6371
-
-        dlat = radians(lat2 - lat1)
-        dlon = radians(lon2 - lon1)
-
-        a = (
-            sin(dlat / 2) ** 2
-            +
-            cos(radians(lat1))
-            *
-            cos(radians(lat2))
-            *
-            sin(dlon / 2) ** 2
-        )
-
-        c = 2 * atan2(
-            sqrt(a),
-            sqrt(1 - a)
-        )
-
-        return R * c
+        return haversine_km(lat1, lon1, lat2, lon2)
 
     def analyze(
         self,
@@ -76,8 +57,10 @@ class PCIConflictAnalysis:
                         rows[j]["longitude"]
                     )
 
-                    # Real PCI conflict candidates
-                    if d > 0.5 and d < 1.0:
+                    # Real PCI conflict candidates - interference risk
+                    # only gets worse the closer two same-PCI sites are,
+                    # so there is no safe lower bound here.
+                    if d < 1.0:
 
                         conflicts.append(
                             {

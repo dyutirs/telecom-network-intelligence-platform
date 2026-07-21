@@ -1,127 +1,65 @@
+import numpy as np
 import pandas as pd
-from math import radians
-from math import sin
-from math import cos
-from math import sqrt
-from math import atan2
+from sklearn.neighbors import BallTree
+
+EARTH_RADIUS_KM = 6371.0
 
 
 class NeighborAnalysis:
+    """Automatic Neighbor Relation (ANR) style check: does each cell have
+    enough distinct neighboring sites nearby to hand over to."""
 
-    def distance_km(
-        self,
-        lat1,
-        lon1,
-        lat2,
-        lon2
-    ):
+    def __init__(self, radius_km=0.5, min_neighbor_sites=2):
 
-        R = 6371
+        self.radius_km = radius_km
+        self.min_neighbor_sites = min_neighbor_sites
 
-        dlat = radians(lat2 - lat1)
-        dlon = radians(lon2 - lon1)
+    def analyze(self, cell_table):
 
-        a = (
-            sin(dlat / 2) ** 2
-            +
-            cos(radians(lat1))
-            *
-            cos(radians(lat2))
-            *
-            sin(dlon / 2) ** 2
+        df = (
+            cell_table
+            .dropna(subset=["latitude", "longitude"])
+            .reset_index(drop=True)
         )
 
-        c = 2 * atan2(
-            sqrt(a),
-            sqrt(1 - a)
+        coords_rad = np.radians(
+            df[["latitude", "longitude"]].to_numpy()
         )
 
-        return R * c
+        tree = BallTree(coords_rad, metric="haversine")
 
-    def analyze(
-        self,
-        cell_info,
-        cell_table
-    ):
+        radius_rad = self.radius_km / EARTH_RADIUS_KM
 
-        merged = cell_table.copy()
+        neighbor_idx = tree.query_radius(coords_rad, r=radius_rad)
 
-        merged = merged.dropna(
-            subset=[
-                "latitude",
-                "longitude"
-            ]
-        )
-
-        print(
-            "Cells with coordinates:",
-            len(merged)
-        )
-
-        rows = merged.to_dict(
-            "records"
-        )
+        enb_ids = df["enb_id"].to_numpy()
 
         results = []
 
-        for row in rows:
+        for i, idx in enumerate(neighbor_idx):
 
-            neighbor_sites = set()
+            own_site = enb_ids[i]
 
-        for other in rows:
-             if row["cell_id"] == other["cell_id"]:
-                  continue
-             d = self.distance_km(
-                  row["latitude"],
-                  row["longitude"],
-                  other["latitude"],
-                  other["longitude"]
-    )
-             if d < 0.3:
-                  neighbor_sites.add(
-                       other["enb_id"]
-        )
-                  neighbor_count = len(
-                  neighbor_sites
-)
+            neighbor_sites = {
+                enb_ids[j] for j in idx if enb_ids[j] != own_site
+            }
 
-        issue = "Normal"
-    
+            neighbor_count = len(neighbor_sites)
 
-        if neighbor_count < 2:
-            issue = "Missing Neighbors"
-
-        if (
-            pd.notna(
-                row["median_ta"]
+            issue = (
+                "Missing Neighbors"
+                if neighbor_count < self.min_neighbor_sites
+                else "Normal"
             )
-            and
-            row["median_ta"] > 20
-        ):
-            issue = "Overshooting"
 
-        results.append(
+            results.append(
                 {
-                    "cell_id":
-                    row["cell_id"],
-
-                    "enb_id":
-                    row["enb_id"],
-
-                    "neighbors":
-                    neighbor_count,
-
-                    "median_ta":
-                    row["median_ta"],
-
-                    "issue":
-                    issue,
-
-                    "health_score":
-                    row["health_score"]
+                    "cell_id": df.loc[i, "cell_id"],
+                    "enb_id": own_site,
+                    "neighbor_site_count": neighbor_count,
+                    "issue": issue,
+                    "health_score": df.loc[i, "health_score"]
                 }
             )
 
-        return pd.DataFrame(
-            results
-        )
+        return pd.DataFrame(results)
