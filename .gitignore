@@ -10,3 +10,10 @@ outputs/
 
 *.xlsx
 data/
+
+# Large raw dataset folders (some files exceed GitHub's 100MB limit) -
+# estimated_cell_info/ is kept since it's small and self-documenting.
+phone/
+scanner/
+vienna_city_model/*.tif
+vienna_city_model/*.xz

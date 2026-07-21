@@ -33,6 +33,15 @@ from src.congestion.congestion_engine import (
 from src.overshooting.overshooting_engine import (
     OvershootingEngine
 )
+from src.multirat.coverage_grid import CoverageGridEngine
+from src.multirat.interworking_engine import InterworkingEngine
+from src.neighbors.neighbor_analysis import NeighborAnalysis
+from src.intelligence.sector_engine import SectorEngine
+from src.pci.pci_suggestion import PCISuggestion
+from src.mobility.handover_engine import HandoverEngine
+from src.propagation.obstruction_engine import ObstructionEngine
+from src.energy.cell_sleep_engine import CellSleepEngine
+from src.visualization.timeline_chart import TimelineChart
 def main():
 
     print("\n==============================")
@@ -412,16 +421,6 @@ def main():
     # EXPORT REPORTS
     # ==================================================
 
-    cell_table.to_csv(
-        "outputs/worst_cells.csv",
-        index=False
-    )
-
-    site_table.to_csv(
-        "outputs/site_summary.csv",
-        index=False
-    )
-
     rca_df.to_csv(
         "outputs/rca_results.csv",
         index=False
@@ -462,6 +461,190 @@ def main():
     )
 
     # ==================================================
+    # MULTI-RAT (5G) COVERAGE COMPARISON
+    # ==================================================
+
+    print("\n==============================")
+    print("LOADING 5G DATA")
+    print("==============================")
+
+    cell_info_5g, phone_5g_df = loader.load_5g()
+
+    print("5G Cells (known positions):", len(cell_info_5g))
+    print("5G Measurements:", len(phone_5g_df))
+
+    print("\n==============================")
+    print("BUILDING COVERAGE GRID (LTE vs 5G)")
+    print("==============================")
+
+    grid_engine = CoverageGridEngine()
+
+    coverage_grid = grid_engine.build(
+        phone_df,
+        phone_5g_df
+    )
+
+    print("Grid Cells:", len(coverage_grid))
+    print(coverage_grid["winner"].value_counts())
+
+    coverage_grid.to_csv(
+        "outputs/coverage_grid.csv",
+        index=False
+    )
+
+    print("\n==============================")
+    print("GENERATING MULTI-RAT MAP")
+    print("==============================")
+
+    map_generator.generate_multirat_map(
+        rca_map_df,
+        cell_info_5g,
+        coverage_grid
+    )
+
+    # ==================================================
+    # NEIGHBOR ANALYSIS (ANR)
+    # ==================================================
+
+    print("\n==============================")
+    print("NEIGHBOR ANALYSIS (ANR)")
+    print("==============================")
+
+    neighbor_table = NeighborAnalysis().analyze(cell_table)
+
+    print(neighbor_table["issue"].value_counts())
+
+    neighbor_table.to_csv(
+        "outputs/neighbor_analysis.csv",
+        index=False
+    )
+
+    # ==================================================
+    # SECTOR INTELLIGENCE
+    # ==================================================
+
+    print("\n==============================")
+    print("SECTOR INTELLIGENCE")
+    print("==============================")
+
+    sector_table = SectorEngine().build_sector_table(cell_table)
+
+    print("Sectors Analyzed:", len(sector_table))
+
+    sector_table.to_csv(
+        "outputs/sector_intelligence.csv",
+        index=False
+    )
+
+    # ==================================================
+    # PCI AUTO-SUGGESTION
+    # ==================================================
+
+    print("\n==============================")
+    print("PCI AUTO-SUGGESTION")
+    print("==============================")
+
+    pci_suggestions = PCISuggestion().suggest(
+        conflict_table,
+        cell_info,
+        cell_table
+    )
+
+    print("Suggestions Generated:", len(pci_suggestions))
+
+    pci_suggestions.to_csv(
+        "outputs/pci_suggestions.csv",
+        index=False
+    )
+
+    # ==================================================
+    # HANDOVER PING-PONG DETECTION (MRO)
+    # ==================================================
+
+    print("\n==============================")
+    print("HANDOVER PING-PONG DETECTION (MRO)")
+    print("==============================")
+
+    handover_table = HandoverEngine().analyze(phone_df)
+
+    print("Ping-Pong Cell Pairs:", len(handover_table))
+
+    handover_table.to_csv(
+        "outputs/handover_pingpong.csv",
+        index=False
+    )
+
+    # ==================================================
+    # BUILDING OBSTRUCTION DIAGNOSIS (COVERAGE CELLS)
+    # ==================================================
+
+    print("\n==============================")
+    print("BUILDING OBSTRUCTION DIAGNOSIS")
+    print("==============================")
+
+    obstruction_table = ObstructionEngine(
+        "vienna_city_model/bkm_complete_31287.tif"
+    ).analyze(
+        rca_df,
+        cell_table,
+        cell_info
+    )
+
+    print(obstruction_table["diagnosis"].value_counts())
+
+    obstruction_table.to_csv(
+        "outputs/obstruction_analysis.csv",
+        index=False
+    )
+
+    # ==================================================
+    # 5G/LTE INTERWORKING RECOMMENDATIONS
+    # ==================================================
+
+    print("\n==============================")
+    print("5G/LTE INTERWORKING")
+    print("==============================")
+
+    interworking_grid = InterworkingEngine().analyze(
+        coverage_grid,
+        cell_info_5g
+    )
+
+    print(interworking_grid["interworking_status"].value_counts())
+
+    interworking_grid.to_csv(
+        "outputs/interworking_analysis.csv",
+        index=False
+    )
+
+    # ==================================================
+    # CELL SLEEP / ENERGY-SAVING CANDIDATES
+    # ==================================================
+
+    print("\n==============================")
+    print("CELL SLEEP CANDIDATES")
+    print("==============================")
+
+    sleep_candidates = CellSleepEngine().analyze(cell_table)
+
+    print("Candidates:", len(sleep_candidates))
+
+    sleep_candidates.to_csv(
+        "outputs/cell_sleep_candidates.csv",
+        index=False
+    )
+
+    # ==================================================
+    # KPI TIMELINE CHART
+    # ==================================================
+
+    print("\n==============================")
+    print("KPI TIMELINE CHART")
+    print("==============================")
+
+    TimelineChart().generate(phone_df)
+
+    # ==================================================
     # SUMMARY
     # ==================================================
 
@@ -479,12 +662,12 @@ def main():
         cell_table["enb_id"].nunique()
     )
     cell_table.to_excel(
-    "outputs/worst_cells.xlsx",
+    "outputs/cell_intelligence.xlsx",
     index=False
 )
 
     site_table.to_excel(
-    "outputs/worst_sites.xlsx",
+    "outputs/site_intelligence.xlsx",
     index=False
 )
 
@@ -504,11 +687,6 @@ def main():
 
     site_table.to_csv(
     "outputs/site_intelligence.csv",
-    index=False
-)
-
-    rca_df.to_csv(
-    "outputs/rca_results.csv",
     index=False
 )
 

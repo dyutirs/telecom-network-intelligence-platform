@@ -1,5 +1,6 @@
 pandas
 numpy
+pyarrow
 streamlit
 plotly
 folium
@@ -8,3 +9,5 @@ networkx
 scikit-learn
 geopy
 matplotlib
+rasterio
+pyproj
